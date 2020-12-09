@@ -1,0 +1,66 @@
+name: DeployAzureFunction
+variables:
+  FunctionAppName: 'PUT-YOUR-FUNCTIONAPP-NAME-HERE'
+  AzureConnection: 'PUT-YOUR-SERVICE-CONNECTION-HERE'
+  ResourcegGroupName: 'PUT-YOUR-RG-NAME-HERE'
+
+trigger:
+  branches:
+    include:
+    - '*'  # must quote since "*" is a YAML reserved character; we want a string
+
+
+
+stages:
+
+- stage: Build
+  jobs:
+  - job: Test_FA
+    pool:
+      vmImage: windows-2019
+    steps:
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Test ARM Deployment'
+      inputs:
+        azureSubscription: $(AzureConnection)
+        resourceGroupName: $(ResourcegGroupName)
+        location: 'PUT-YOUR-LOCATION-HERE'
+        csmFile: Deployment/azuredeploy.json
+        deploymentMode: Validation
+    - powershell: |
+       Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
+      displayName: 'Install Module'
+   
+  - job: Build_FA
+    pool:
+      vmImage: windows-2019
+    steps:
+    - task: ArchiveFiles@2
+      displayName: 'Archive FunctionApp'
+      inputs:
+        rootFolderOrFile: FunctionApp
+        includeRootFolder: false
+        archiveFile: '$(System.DefaultWorkingDirectory)/zip/FunctionApp.zip'
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: 'zip'
+        targetPath: '$(System.DefaultWorkingDirectory)/zip'
+
+- stage: Deploy
+  jobs:
+  - job: Deploy_ARM
+    pool:
+      vmImage: windows-2019
+    steps:
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Deploy Azure Resources'
+      continueOnError: true
+      inputs:
+        azureSubscription: $(AzureConnection)
+        resourceGroupName: $(ResourcegGroupName)
+        location: 'PUT-YOUR-LOCATION-HERE'
+        csmFile: Deployment/azuredeploy.json
+        csmParametersFile: Deployment/azuredeploy.parameters.json
+        overrideParameters: '-functionAppName $(FunctionAppName)'
+        deploymentMode: Incremental
+        deploymentOutputs: DeploymentOutput
