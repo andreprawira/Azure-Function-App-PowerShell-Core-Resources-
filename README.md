@@ -1,5 +1,5 @@
 # YAML template to deploy Azure Function App with PowerShell Core Infrastructure (Resources)
-This repo deploys Azure FunctionApp, Application Insights, Storage Account, and AppService infrastructure (resources). You can combine this repo with deploying your own function if you know how, read the steps below before running your own CI pipeline.
+This repo deploys Azure FunctionApp, Application Insights, Storage Account, and AppService infrastructure (resources). You can also combine this repo with deploying your own function code if you know how, read the steps below before running your own CI pipeline.
 
 DO THIS BEFORE RUNNING THE CI PIPELINE:
 
